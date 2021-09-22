@@ -4,17 +4,16 @@ from copy import deepcopy
 
 init(autoreset=True)
 
-# Algoritmos del Método Fridich:
+# Algoritmos del Método Fridrich:
 	
 class Algorithms:
-	class Fridich:
+	class Fridrich:
 		class PLL:
 			class T:
 				
-				algo = "(R U R' U') R' F R2 U' R' U' R U R' F'"
-				
 				# ~ \r	↑ ↓ → ←
 				info = '''
+				\r	Fridrich PLL: T
 				\r	┌───┬───┬───┐
 				\r	│   │   │ ↑ │
 				\r	├───┼───┼─│─┤
@@ -23,6 +22,9 @@ class Algorithms:
 				\r	│   │   │ ↓ │
 				\r	└───┴───┴───┘
 				'''
+				
+				algo = "(R U R' U') R' F R2 U' R' U' R U R' F'"
+
 
 Algo = Algorithms
 
@@ -32,7 +34,7 @@ Algo = Algorithms
 class Cube:
 	
 	__author__  = 'LawlietJH'
-	__version__ = 'v1.0.0'
+	__version__ = 'v1.0.1'
 	__description = '''
 		Esta clase es una Abstracción del Cubo de Rubik de x*x*x dimensiones.
 		Permite manipular el cubo y visualizarlo en consola.
@@ -56,7 +58,7 @@ class Cube:
 		self.cube_resolve = []
 		self.move_logs = []
 		self.len_c = len_c
-		self.generate_cube()
+		self.generateCube()
 		
 		self.adjust = len(str(len_c**3))+1
 		self.cube = deepcopy(self.cube_resolve)
@@ -72,7 +74,7 @@ class Cube:
 		
 		self.cube_colors = deepcopy(self.cube_colors_resolve)
 		
-		self.update_layer_list()
+		self.updateLayerList()
 		
 		self.moves_availables  = list(self.layers_list.keys())
 		self.moves_availables += [ _ + '\'' for _ in list(self.layers_list.keys()) ]
@@ -90,7 +92,7 @@ class Cube:
 	#===================================================================
 	# Manipulación del Objeto:
 	
-	def get_piece_by_letters(self, piece, layer):
+	def getPieceByLetters(self, piece, layer):
 		
 		#Obtiene el número de pieza basado en las capa indicada en la primer letra en la variable 'piece'
 		
@@ -186,7 +188,7 @@ class Cube:
 						raise self.LayerDoesNotExist(msg_error)
 				
 				item = self.layers_list[items[0]]['layer']
-				item = self.get_piece_by_letters(letters, item)
+				item = self.getPieceByLetters(letters, item)
 				
 				return item
 		
@@ -212,10 +214,10 @@ class Cube:
 	def pow(self, b, e): return b**e
 	
 	#Invierte las listas en una lista:
-	def inv_elems(self, l): return [ e[::-1] for e in l ] 
+	def invElems(self, l): return [ e[::-1] for e in l ] 
 	
 	#Obtiene las letras de las capas de toda una cadena o lista de letras.
-	def get_layer_letters(self, letters):
+	def getLayerLetters(self, letters):
 		
 		if not letters.count('(') == letters.count(')'):
 			msg_error = 'Missing Parentheses: ' + (repr(')') if letters.count('(') > letters.count(')') else repr('('))
@@ -287,62 +289,31 @@ class Cube:
 	#===================================================================
 	# Mover:
 	
-	def R(self, log=True):
+	def moveAssign(self, move, qty=1):
 		
-		new = deepcopy(self.cube)					#Copia del estado actual del cubo (basado en las capas primordiales F, todas las S y B)
-		new_colors = deepcopy(self.cube_colors)		#Copia del estado actual de los colores en las capas.
-		
-		for i in range(self.len_c):
+		for _ in range(qty):
 			
-			#Intercambio de piezas de la capa R en sentido horario:
-			new[-1-i][0][-1]  = self.cube[0][i][-1]
-			new[0][i][-1]     = self.cube[i][-1][-1]
-			new[i][-1][-1]    = self.cube[-1][-1-i][-1]
-			new[-1][-1-i][-1] = self.cube[-1-i][0][-1]
+			new = deepcopy(self.cube)					#Copia del estado actual del cubo (basado en las capas primordiales F, todas las S y B)
+			new_colors = deepcopy(self.cube_colors)		#Copia del estado actual de los colores en las capas.
 			
-			#Intercambio de Colores Exteriores en piezas de la capa R en sentido horario:
-			new_colors['U'][i][-1]   = self.cube_colors['F'][i][-1]
-			new_colors['F'][i][-1]   = self.cube_colors['D'][i][-1]
-			new_colors['D'][i][-1]   = self.cube_colors['B'][-1-i][0]
-			new_colors['B'][-1-i][0] = self.cube_colors['U'][i][-1]
+			for i in range(self.len_c):
+				for j, m in enumerate(move):
+					for x in range(len(m)):
+						if j == 0:
+							#Intercambio de Piezas:
+							exec('new'+m[x]+' = self.cube'+m[(x+1)%4])
+						else:
+							#Intercambio de Colores:
+							exec('new_colors'+m[x]+' = self.cube_colors'+m[(x+1)%4])
 			
-			#Intercambio de Colores Interiores en piezas de la capa R en sentido horario:
-			new_colors['R'][0][-1-i]  = self.cube_colors['R'][i][0]
-			new_colors['R'][i][0]     = self.cube_colors['R'][-1][i]
-			new_colors['R'][-1][i]    = self.cube_colors['R'][-1-i][-1]
-			new_colors['R'][-1-i][-1] = self.cube_colors['R'][0][-1-i]
-		
-		self.cube_colors = deepcopy(new_colors)
-		self.cube = deepcopy(new)
-		self.update_layer_list()
-		
-		#Registro de movimiento:
-		if log: self.move_logs.append('R')
-	
-	def move_assign(self, move):
-		
-		new = deepcopy(self.cube)					#Copia del estado actual del cubo (basado en las capas primordiales F, todas las S y B)
-		new_colors = deepcopy(self.cube_colors)		#Copia del estado actual de los colores en las capas.
-		
-		for i in range(self.len_c):
-			for j, m in enumerate(move):
-				for x in range(len(m)):
-					if j == 0:
-						#Intercambio de Piezas:
-						exec('new'+m[x]+' = self.cube'+m[(x+1)%4])
-					else:
-						#Intercambio de Colores:
-						exec('new_colors'+m[x]+' = self.cube_colors'+m[(x+1)%4])
-		
-		self.cube_colors = deepcopy(new_colors)
-		self.cube = deepcopy(new)
-		self.update_layer_list()
+			self.cube_colors = deepcopy(new_colors)
+			self.cube = deepcopy(new)
+			self.updateLayerList()
 	
 	def move(self, algorithm, log=True):
 		
-		algorithm = self.get_layer_letters(algorithm)
-		algorithm = self.reduce_algorithm(algorithm)
-		# ~ algorithm = self.reduce_algorithm(algorithm)
+		algorithm = self.getLayerLetters(algorithm)
+		algorithm = self.reduceAlgorithm(algorithm)
 		
 		movements = {
 			'F': [
@@ -381,7 +352,7 @@ class Cube:
 			],
 			'E': [
 				["[0][(self.len_c-1)//2][-1-i]",   "[i][(self.len_c-1)//2][0]",      "[-1][(self.len_c-1)//2][i]",     "[-1-i][(self.len_c-1)//2][-1]"],	#Intercambio de piezas de la capa E en sentido horario.
-				["['F'][(self.len_c-1)//2][-1-i]", "['L'][(self.len_c-1)//2][-1-i]", "['B'][(self.len_c-1)//2][-1-i]", "['R'][(self.len_c-1)//2][]"   ]		#Intercambio de Colores Exteriores en piezas de la capa E en sentido horario.
+				["['F'][(self.len_c-1)//2][-1-i]", "['L'][(self.len_c-1)//2][-1-i]", "['B'][(self.len_c-1)//2][-1-i]", "['R'][(self.len_c-1)//2][-1-i]"]	#Intercambio de Colores Exteriores en piezas de la capa E en sentido horario.
 			],
 			'S': [
 				["[(self.len_c-1)//2][0][-1-i]",   "[(self.len_c-1)//2][i][0]",   "[(self.len_c-1)//2][-1][i]",  "[(self.len_c-1)//2][-1-i][-1]" ],			#Intercambio de piezas de la capa S en sentido horario.
@@ -396,25 +367,22 @@ class Cube:
 				msg_error += 'Use: F, F\' or F2, same for B, R, L, U, D, f or Fw, b or Bw, r or Rw, l or Lw, u or Uw, d or Dw, S, M, E.'
 				raise self.LayerDoesNotExist(msg_error)
 			
-			move = None
-			
 			if '\'' in layer:
-				move = self.inv_elems(movements[layer[:-1]])
-				self.move_assign(move)
+				move = self.invElems(movements[layer[0]])
+				self.moveAssign(move)
 			elif '2' in layer:
-				move = movements[layer[:-1]]
-				self.move_assign(move)
-				self.move_assign(move)
+				move = movements[layer[0]]
+				self.moveAssign(move, 2)
 			else:
 				move = movements[layer]
-				self.move_assign(move)
+				self.moveAssign(move)
 			
 			if log: self.move_logs.append(layer)
 	
 	#===================================================================
 	# Mostrar:
 	
-	def show_layer(self, layer):
+	def showLayer(self, layer):
 		
 		if not layer in self.layers_list:
 			msg_error  = 'Layer {} does not exist.\n'.format(repr(layer))
@@ -429,7 +397,7 @@ class Cube:
 			print()
 		print()
 	
-	def pretty_colors(self, layers=['U','F','R','L','B','D']):
+	def prettyColors(self, layers=['U','F','R','L','B','D'], on_list=False, with_letters=True):
 		
 		text = Fore.WHITE + Style.BRIGHT
 		colors = {
@@ -442,6 +410,7 @@ class Cube:
 			'Cyan':     Back.CYAN    + text,
 			'Blanco':   Back.WHITE   + text
 		}
+		reset = Back.RESET + Fore.RESET
 		color_list = []
 		
 		if type(layers) in [list, tuple]:
@@ -449,15 +418,15 @@ class Cube:
 				color_list.append(
 					( l, deepcopy(self.cube_colors[l]) )
 				)
-		
+		out = {}
 		for l, z in color_list:
 			
-			print(' Layer ' + l + ':')
-			print(' ┌' + '─'*self.adjust + (('─┬'+'─'*self.adjust)*(self.len_c-1)) + '─┐')
+			out[l] = []
+			out[l].append(' ┌' + '─'*self.adjust + (('─┬'+'─'*self.adjust)*(self.len_c-1)) + '─┐')
 			
 			for j, y in enumerate(z):
 				
-				print(end=' ')
+				out[l].append(' ')
 				
 				for i, x in enumerate(y):
 					
@@ -466,22 +435,94 @@ class Cube:
 					piece = str(layer[j][i]).rjust(self.adjust) + ' '
 					
 					try:
-						print('│' + colors[x] + piece, end='')
+						out[l][-1] += '│' + colors[x] + piece + reset
 					except KeyError:
 						msg_error = 'Color {} is not supported.'.format(x)
 						msg_error += '\nUse: Negro, Rojo, Verde, Amarillo, Azul, Morado, Cyan o Blanco.'
 						raise self.NotSupported(msg_error)
 					
-					if i == len(y)-1: print('│')
+					if i == len(y)-1:
+						out[l][-1] += '│'
 					
 				if 0 <= j < len(z)-1:
-					print(' ├'+'─'*self.adjust + (('─┼'+'─'*self.adjust)*(self.len_c-1)) + '─┤')
+					out[l].append(' ├'+'─'*self.adjust + (('─┼'+'─'*self.adjust)*(self.len_c-1)) + '─┤')
 				else:
-					print(' └'+'─'*self.adjust + (('─┴'+'─'*self.adjust)*(self.len_c-1)) + '─┘')
-			print()
-		print()
+					out[l].append(' └'+'─'*self.adjust + (('─┴'+'─'*self.adjust)*(self.len_c-1)) + '─┘')
+		
+		if on_list:
+			
+			for layer, rows in out.items():
+				
+				if not with_letters:
+					print(' Layer ' + layer + ':')
+				
+				for i, row in enumerate(rows):
+					if i == 0:
+						print(row + (layer if with_letters else ''))
+					else:
+						print(row)
+				print()
+			
+		else:
+			
+			if 'U' in layers:
+				for pos in range(len(out['U'])):
+					row  = ' '*(18 if with_letters else 17)
+					row += out['U'][pos]
+					if pos == 0:
+						print(row + ('U' if with_letters else ''))
+					else:
+						print(row)
+			
+			for pos in range(len(out['L'])):
+				if pos == 0:
+					row = ''
+					if 'L' in layers:
+						row += out['L'][pos] + ('L' if with_letters else '')
+					else:
+						row += ' '*(18 if with_letters else 17)
+					if 'F' in layers:
+						row += out['F'][pos] + ('F' if with_letters else '')
+					else:
+						row += ' '*(18 if with_letters else 17)
+					if 'R' in layers:
+						row += out['R'][pos] + ('R' if with_letters else '')
+					else:
+						row += ' '*(18 if with_letters else 17)
+					if 'B' in layers:
+						row += out['B'][pos] + ('B' if with_letters else '')
+					else:
+						row += ' '*(18 if with_letters else 17)
+				else:
+					row = ''
+					if 'L' in layers:
+						row += out['L'][pos] + (' ' if with_letters else '')
+					else:
+						row += ' '*(18 if with_letters else 17)
+					if 'F' in layers:
+						row += out['F'][pos] + (' ' if with_letters else '')
+					else:
+						row += ' '*(18 if with_letters else 17)
+					if 'R' in layers:
+						row += out['R'][pos] + (' ' if with_letters else '')
+					else:
+						row += ' '*(18 if with_letters else 17)
+					if 'B' in layers:
+						row += out['B'][pos] + (' ' if with_letters else '')
+					else:
+						row += ' '*(18 if with_letters else 17)
+				print(row)
+			
+			if 'D' in layers:
+				for pos in range(len(out['D'])):
+					row  = ' '*(18 if with_letters else 17)
+					row += out['D'][pos]
+					if pos == 0:
+						print(row + ('D' if with_letters else ''))
+					else:
+						print(row)
 	
-	def show_piece_enum(self, cube=None, verb=False):	# Muestra todas las capas de cubo en su estado actual.
+	def showPieceEnum(self, cube=None, verb=False):	# Muestra todas las capas de cubo en su estado actual.
 		
 		cube = self.cube if not cube else cube
 		
@@ -518,7 +559,7 @@ class Cube:
 				print()
 		print()
 	
-	def reduce_algorithm(self, algorithm):
+	def reduceAlgorithm(self, algorithm):
 		
 		algorithm = algorithm[::-1]
 		
@@ -527,12 +568,13 @@ class Cube:
 		
 		for x in range(len_a):
 			
+			if algorithm[x] == None: continue
+			
 			try:
 				
 				if  algorithm[x] == algorithm[x+1] \
 				and algorithm[x] == algorithm[x+2] \
-				and algorithm[x] == algorithm[x+3] \
-				and not algorithm[x] == None:
+				and algorithm[x] == algorithm[x+3]:
 					
 					for i in range(4): algorithm[x+i] = None
 			
@@ -540,9 +582,8 @@ class Cube:
 			
 			try:
 				
-				if algorithm[x] == algorithm[x+1] \
-				and  algorithm[x] == algorithm[x+2] \
-				and not algorithm[x] == None:
+				if  algorithm[x] == algorithm[x+1] \
+				and algorithm[x] == algorithm[x+2]:
 					
 					for i in range(1, 3): algorithm[x+i] = None
 					
@@ -555,8 +596,7 @@ class Cube:
 			
 			try:
 				
-				if algorithm[x] == algorithm[x+1] \
-				and not algorithm[x] == None:
+				if algorithm[x] == algorithm[x+1]:
 					
 					if algorithm[x][-1] == '\'':
 						algorithm[x] = algorithm[x][:-1]+'2'
@@ -568,56 +608,120 @@ class Cube:
 					algorithm[x+1] = None
 				
 			except: pass
+			
+			try:
+				if algorithm[x][0] == algorithm[x+1][0]:
+					
+					if len(algorithm[x]) == 2 and len(algorithm[x+1]) == 2:
+						
+						if algorithm[x][-1] == "'" and algorithm[x+1][-1] == '2':
+							algorithm[x]   = None
+							algorithm[x+1] = algorithm[x+1][:-1]
+						elif algorithm[x][-1] == '2' and algorithm[x+1][-1] == "'":
+							algorithm[x]   = None
+							algorithm[x+1] = algorithm[x+1][:-1]
+						
+					elif len(algorithm[x]) == 1 and len(algorithm[x+1]) == 2:
+						
+						if algorithm[x+1][-1] == '2':
+							algorithm[x]   = None
+							algorithm[x+1] = algorithm[x+1][:-1] + "'"
+						elif algorithm[x+1][-1] == "'":
+							algorithm[x]   = None
+							algorithm[x+1] = None
+						
+					elif len(algorithm[x]) == 2 and len(algorithm[x+1]) == 1:
+						
+						if algorithm[x][-1] == "'":
+							algorithm[x]   = None
+							algorithm[x+1] = None
+						elif algorithm[x][-1] == '2':
+							algorithm[x]    = None
+							algorithm[x+1] += "'"
+			except: pass
 		
 		while None in algorithm: algorithm.remove(None)
 		
 		return algorithm[::-1]
 	
-	def show_logs(self):
+	def setNone(self, lis, ini, end):
+		
+		for r in range(ini, end):
+			lis[r] = None
+		
+		return lis
+	
+	def reduce(self, algorithm, subreduce=True):
+		
+		algorithm = deepcopy(algorithm)
+		len_a = len(algorithm)
+		
+		for z in list(range(1, len_a//2+1))[::-1]:
+			
+			for y in range(0, len_a-(z*2)+1):
+				
+				parts = []
+				for x in range(len_a//z+1):
+					
+					ini = y+x*z
+					des = y+x*z+z
+					
+					if des > len_a: break
+					
+					part = algorithm[ini:des]
+					parts.append((part, ini))
+				
+				cur = []
+				qty = 0
+				for i, (part, ini) in enumerate(parts):
+					
+					if None in part:
+						if qty >= 1:
+							algorithm = self.setNone(algorithm, ini-(z*(qty+1)), ini)
+							temp = parts[i-1][0]
+							if subreduce: temp = self.reduce(temp)
+							algorithm[ini-(z*(qty+1))] = (temp, qty+1)
+							qty = 0
+						continue
+					
+					if cur == part:
+						qty += 1
+						if i == len(parts)-1:
+							algorithm = self.setNone(algorithm, ini-(z*qty), ini+z)
+							algorithm[ini-(z*qty)] = (part, qty+1)
+					else:
+						if qty >= 1:
+							algorithm = self.setNone(algorithm, ini-(z*(qty+1)), ini)
+							temp = parts[i-1][0]
+							if subreduce: temp = self.reduce(temp)
+							algorithm[ini-(z*(qty+1))] = (temp, qty+1)
+							qty = 0
+						cur = part
+		
+		while None in algorithm: algorithm.remove(None)
+		
+		return algorithm
+	
+	def logParentheses(self, algorithm):
+		
+		pass
+	
+	def showLogs(self):
 		
 		#--------------------------------------------------
 		#Reduce a parentesis cuando hay un patron de movimientos seguidos.
-		
-		algorithm = deepcopy(self.move_logs)
-		len_al = len(algorithm)
-		
-		for _ in range(2, len_al//2+1)[::-1]:
-			
-			len_a = len(algorithm)
-			des = _
-			add = des
-			aum = 1
-			parenthesis = False
-			
-			for x in range(len_a-(_-1)):
-				a = algorithm[x:x+des]
-				if None in a: continue
-				for y in range(len_a//des):
-					b = algorithm[x+add:x+add+des]
-					if len(b) < len(a): break				# Si los elementos buscados son de menor cantidad se salta.
-					if a == b:
-						parenthesis = True
-						for i in range(des):					#Remplaza por None los elementos repetidos, para no afectar la posicion de los elementos actuales en la lista.
-							algorithm[x+add+i] = None
-						aum += 1
-					add += des
-				if parenthesis:									#Si hubo un patron se añaden los parentesis y la cantidad de repeticiones.
-					algorithm[x] = '('+algorithm[x]
-					algorithm[x+des-1] += ')' + str(aum)
-					parenthesis = False
-				add = des
-				aum = 1
-			
-			while None in algorithm: algorithm.remove(None)		#Elimina los elementos None.
-		
-		self.move_logs = algorithm
+		self.move_logs = self.reduce(self.move_logs)
 		#--------------------------------------------------
 		
 		print('\n Moves:', ('None' if not self.move_logs else ''), end='')
 		
 		for i, log in enumerate(self.move_logs):
 			
-			print(log, end='')
+			if log.__class__ == tuple:
+				# ~ log = self.logParentheses(log)
+				print(log, end='')
+			else:
+				print(log, end='')
 			
 			if not i == len(self.move_logs)-1:
 				
@@ -630,7 +734,7 @@ class Cube:
 	#===================================================================
 	# Generales:
 	
-	def generate_cube(self):
+	def generateCube(self):
 		
 		cube = [
 			[
@@ -645,7 +749,7 @@ class Cube:
 		
 		self.cube_resolve = cube
 	
-	def update_layer_list(self):
+	def updateLayerList(self):
 		
 		self.layers_list = {
 			'F':  {'layer':self.get_F,  'colors': self.cube_colors['F'], 'desc':'F (Front)' },
@@ -678,10 +782,12 @@ class Cube:
 	# Obtener:
 	
 	@property
-	def get_F(self): return self.cube[0]
+	def get_F(self):
+		return self.cube[0]
 	
 	@property
-	def get_B(self): return self.inv_elems(self.cube[-1])
+	def get_B(self):
+		return self.invElems(self.cube[-1])
 	
 	@property
 	def get_R(self):
@@ -697,7 +803,7 @@ class Cube:
 		for z in self.cube:
 			for i, y in enumerate(z):
 				layer[i].append(y[0])
-		return self.inv_elems(layer)
+		return self.invElems(layer)
 	
 	@property
 	def get_U(self):
@@ -712,7 +818,8 @@ class Cube:
 		return layer
 	
 	@property
-	def get_Fw(self): return self.get_F+['']+self.cube[1]
+	def get_Fw(self):
+		return self.get_F+['']+self.cube[1]
 	
 	@property
 	def get_Bw(self):
@@ -735,7 +842,7 @@ class Cube:
 		for z in self.cube:
 			for i, y in enumerate(z):
 				layer[i].append(y[1])
-		return self.get_L+['']+self.inv_elems(layer)
+		return self.get_L+['']+self.invElems(layer)
 	
 	@property
 	def get_Uw(self):
@@ -755,7 +862,7 @@ class Cube:
 		for z in self.cube:
 			for i, y in enumerate(z):
 				layer[i].append(y[self.len_c//2])
-		return self.inv_elems(layer)
+		return self.invElems(layer)
 	
 	@property
 	def get_E(self):
@@ -764,7 +871,8 @@ class Cube:
 		return layer
 	
 	@property
-	def get_S(self): return self.cube[(self.len_c-1)//2]
+	def get_S(self):
+		return self.cube[(self.len_c-1)//2]
 	
 	#===================================================================
 	
@@ -779,29 +887,21 @@ class Cube:
 # ~ print(cube['FU'])		# Muestra el número de pieza en la interseccion de las 2 capas.
 # ~ print(cube['FUR'])		# Muestra el número de pieza en la interseccion de las 3 capas.
 
+# ~ cube = Cube(color_list=['Verde','Azul','Rojo','Morado','Negro','Amarillo'])
+# ~ cube.showPieceEnum(verb=True)
+
 # Mover:
 
-cube1 = Cube()
-# ~ cube1.show_piece_enum(verb=True)
-# ~ cube1.show_piece_enum()
+cube = Cube()
 
-# ~ cube1.move("M U M' U2 M U M' U'")
-# ~ cube1.move("M U M' U2 M U M' U")
-# ~ cube1.move("M2 U' M2 U2 M2 U' M2")
-
-# ~ print(Algo.Fridich.PLL.T())
-# ~ cube1.move(Algo.Fridich.PLL.T())
-# ~ cube1.move("(R U R' U') R' F R2 U' R' U' R U R' F'")
-# ~ cube1.move("U L (R U R' U') 3")
-cube1.move("ULRURUBFBFFBFBFFLR BFBFFBFBFFULRURULR")
-# ~ cube1.move("F")
-
-cube1.show_logs()
-# ~ cube1.pretty_colors()
-
-T = Algorithms.Fridich.PLL.T
+T = Algo.Fridrich.PLL.T
 print(T.info)
-print(T.algo)
+# ~ print(T.algo)
+cube.move(T.algo)
+
+cube.showLogs()
+cube.prettyColors()
+
 
 #=======================================================================
 
