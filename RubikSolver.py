@@ -4,32 +4,7 @@ from copy import deepcopy
 
 init(autoreset=True)
 
-# Algoritmos del Método Fridrich:
-	
-class Algorithms:
-	class Fridrich:
-		class PLL:
-			class T:
-				
-				# ~ \r	↑ ↓ → ←
-				info = '''
-				\r	Fridrich PLL: T
-				\r	┌───┬───┬───┐
-				\r	│   │   │ ↑ │
-				\r	├───┼───┼─│─┤
-				\r	│ ← ───── → │
-				\r	├───┼───┼─│─┤
-				\r	│   │   │ ↓ │
-				\r	└───┴───┴───┘
-				'''
-				
-				algo = "(R U R' U') R' F R2 U' R' U' R U R' F'"
-
-
-Algo = Algorithms
-
 #===================================================================
-
 
 class Cube:
 	
@@ -40,7 +15,7 @@ class Cube:
 		Permite manipular el cubo y visualizarlo en consola.
 	'''
 	
-	def __init__(self, len_c=3, color_list=['Azul','Verde','Rojo','Morado','Amarillo','Negro']):
+	def __init__(self, len_c=3, color_list=['Azul','Verde','Rojo','Morado','Amarillo','Negro'], singmasterNotation=False):
 		
 		if not type(color_list) in [list, tuple] and not len(color_list) == 6:
 			msg_error = 'The list of colors for the cube is incomplete, please select 6 colors.'
@@ -79,6 +54,11 @@ class Cube:
 		self.moves_availables  = list(self.layers_list.keys())
 		self.moves_availables += [ _ + '\'' for _ in list(self.layers_list.keys()) ]
 		self.moves_availables += [ _ + '2'  for _ in list(self.layers_list.keys()) ]
+		self.moves_availables += ['x', 'x\'', 'x2',		# Rotar sobre el eje x: rotar el cubo entero en R.
+								  'y', 'y\'', 'y2',		# Rotar sobre el eje y: rotar el cubo entero en U.
+								  'z', 'z\'', 'z2']		# Rotar sobre el eje z: rotar el cubo entero en F.
+		
+		self.singmasterNotation = singmasterNotation
 	
 	#===================================================================
 	# Manejo de Errores:
@@ -284,7 +264,8 @@ class Cube:
 		return output
 	
 	@property
-	def is_solved(self): return self.cube_resolve == self.cube
+	def is_solved(self):
+		return self.cube_resolve == self.cube
 	
 	#===================================================================
 	# Mover:
@@ -301,6 +282,7 @@ class Cube:
 					for x in range(len(m)):
 						if j == 0:
 							#Intercambio de Piezas:
+							if i == self.len_c-1: continue				# Evita repetir el primer cambio de pieza
 							exec('new'+m[x]+' = self.cube'+m[(x+1)%4])
 						else:
 							#Intercambio de Colores:
@@ -317,9 +299,9 @@ class Cube:
 		
 		movements = {
 			'F': [
-				["[0][0][-1-i]",    "[0][i][0]",    "[0][-1][i]",   "[0][-1-i][-1]"  ],			#Intercambio de piezas de la capa F en sentido horario.
-				["['U'][-1][-1-i]", "['L'][i][-1]", "['D'][0][i]",  "['R'][-1-i][0]" ],			#Intercambio de Colores Exteriores en piezas de la capa F en sentido horario.
-				["['F'][0][-1-i]",  "['F'][i][0]",  "['F'][-1][i]", "['F'][-1-i][-1]"]			#Intercambio de Colores Interiores en piezas de la capa F en sentido horario.
+				["[0][i][0]",       "[0][-1][i]",   "[0][-1-i][-1]", "[0][0][-1-i]"   ],		#Intercambio de piezas de la capa F en sentido horario. Orden: [z][y][x]
+				["['U'][-1][-1-i]", "['L'][i][-1]", "['D'][0][i]",   "['R'][-1-i][0]" ],		#Intercambio de Colores Exteriores en piezas de la capa F en sentido horario.
+				["['F'][0][-1-i]",  "['F'][i][0]",  "['F'][-1][i]",  "['F'][-1-i][-1]"]			#Intercambio de Colores Interiores en piezas de la capa F en sentido horario.
 			],
 			'B': [
 				["[-1][0][i]",     "[-1][i][-1]",  "[-1][-1][-1-i]",  "[-1][-1-i][0]"  ],		#Intercambio de piezas de la capa B en sentido horario.
@@ -351,8 +333,8 @@ class Cube:
 				["['U'][-1-i][(self.len_c-1)//2]", "['B'][i][(self.len_c-1)//2]", "['D'][-1-i][(self.len_c-1)//2]", "['F'][-1-i][(self.len_c-1)//2]"]		#Intercambio de Colores Exteriores en piezas de la capa M en sentido horario.
 			],
 			'E': [
-				["[0][(self.len_c-1)//2][-1-i]",   "[i][(self.len_c-1)//2][0]",      "[-1][(self.len_c-1)//2][i]",     "[-1-i][(self.len_c-1)//2][-1]"],	#Intercambio de piezas de la capa E en sentido horario.
-				["['F'][(self.len_c-1)//2][-1-i]", "['L'][(self.len_c-1)//2][-1-i]", "['B'][(self.len_c-1)//2][-1-i]", "['R'][(self.len_c-1)//2][-1-i]"]	#Intercambio de Colores Exteriores en piezas de la capa E en sentido horario.
+				["[-1-i][(self.len_c-1)//2][-1]",  "[-1][(self.len_c-1)//2][i]",     "[i][(self.len_c-1)//2][0]",      "[0][(self.len_c-1)//2][-1-i]"  ],	#Intercambio de piezas de la capa E en sentido horario.
+				["['R'][(self.len_c-1)//2][-1-i]", "['B'][(self.len_c-1)//2][-1-i]", "['L'][(self.len_c-1)//2][-1-i]", "['F'][(self.len_c-1)//2][-1-i]"]	#Intercambio de Colores Exteriores en piezas de la capa E en sentido horario.
 			],
 			'S': [
 				["[(self.len_c-1)//2][0][-1-i]",   "[(self.len_c-1)//2][i][0]",   "[(self.len_c-1)//2][-1][i]",  "[(self.len_c-1)//2][-1-i][-1]" ],			#Intercambio de piezas de la capa S en sentido horario.
@@ -364,23 +346,85 @@ class Cube:
 			
 			if not layer in self.moves_availables:
 				msg_error  = 'Layer {} does not exist.\n'.format(repr(layer))
-				msg_error += 'Use: F, F\' or F2, same for B, R, L, U, D, f or Fw, b or Bw, r or Rw, l or Lw, u or Uw, d or Dw, S, M, E.'
+				msg_error += 'Use: F, F\' or F2, same for B, R, L, U, D, f or Fw, b or Bw, r or Rw, l or Lw, u or Uw, d or Dw or S, M, E or x, y, z.'
 				raise self.LayerDoesNotExist(msg_error)
 			
+			xyorz = layer[0] in ['x','y','z']
+			
+			if layer[0].islower() and not xyorz:
+				if '\'' in layer or '2' in layer:
+					layer = layer[0].upper() + 'w' + layer[-1]
+				else:
+					layer = layer[0].upper() + 'w'
+			
+			if xyorz:
+				
+				if layer[0] == 'x':
+					layer = 'Rw' + ('\'' if '\'' in layer else ('2' if '2' in layer else ''))
+					let = "L"
+				elif layer[0] == 'y':
+					layer = 'Uw' + ('\'' if '\'' in layer else ('2' if '2' in layer else ''))
+					let = "D"
+				elif layer[0] == 'z':
+					layer = 'Fw' + ('\'' if '\'' in layer else ('2' if '2' in layer else ''))
+					let = "B"
+				
+				if '\'' in layer:
+					move = movements[let]
+					self.moveAssign(move)
+				elif '2' in layer:
+					move = movements[let]
+					self.moveAssign(move, 2)
+				else:
+					move = movements[let]
+					move = self.invElems(move)
+					self.moveAssign(move)
+			
+			W = None
+			if 'w' in layer:
+				if layer[0] == 'F': W = movements['S']
+				if layer[0] == 'B': W = self.invElems(movements['S'])
+				if layer[0] == 'R': W = self.invElems(movements['M'])
+				if layer[0] == 'L': W = movements['M']
+				if layer[0] == 'U': W = movements['E']
+				if layer[0] == 'D': W = self.invElems(movements['E'])
+			
 			if '\'' in layer:
+				if W: self.moveAssign(self.invElems(W))
 				move = self.invElems(movements[layer[0]])
 				self.moveAssign(move)
 			elif '2' in layer:
+				if W: self.moveAssign(W, 2)
 				move = movements[layer[0]]
 				self.moveAssign(move, 2)
 			else:
-				move = movements[layer]
+				if W: self.moveAssign(W)
+				move = movements[layer[0]]
 				self.moveAssign(move)
+			
+			# Restaurando:
+			if xyorz:
+				if layer[0] == 'R': layer = 'x' + ('\'' if '\'' in layer else ('2' if '2' in layer else ''))
+				if layer[0] == 'U': layer = 'y' + ('\'' if '\'' in layer else ('2' if '2' in layer else ''))
+				if layer[0] == 'F': layer = 'z' + ('\'' if '\'' in layer else ('2' if '2' in layer else ''))
+			
+			if self.singmasterNotation:
+				if 'w' in layer:
+					if '\'' in layer or '2' in layer:
+						layer = layer[0].lower() + layer[-1]
+					else:
+						layer = layer[0].lower()
 			
 			if log: self.move_logs.append(layer)
 	
 	#===================================================================
 	# Mostrar:
+	
+	def layer(self, layer):
+		cube = self.getCube()
+		rows = cube[layer]
+		layer = '\r{}\n\r{}\n\r{}\n\r{}\n\r{}\n\r{}\n\r{}'.format(*rows)
+		return layer
 	
 	def showLayer(self, layer):
 		
@@ -399,55 +443,7 @@ class Cube:
 	
 	def prettyColors(self, layers=['U','F','R','L','B','D'], on_list=False, with_letters=True):
 		
-		text = Fore.WHITE + Style.BRIGHT
-		colors = {
-			'Negro':    Back.BLACK   + text,
-			'Rojo':     Back.RED     + text,
-			'Verde':    Back.GREEN   + text,
-			'Amarillo': Back.YELLOW  + text,
-			'Azul':     Back.BLUE    + text,
-			'Morado':   Back.MAGENTA + text,
-			'Cyan':     Back.CYAN    + text,
-			'Blanco':   Back.WHITE   + text
-		}
-		reset = Back.RESET + Fore.RESET
-		color_list = []
-		
-		if type(layers) in [list, tuple]:
-			for l in layers:
-				color_list.append(
-					( l, deepcopy(self.cube_colors[l]) )
-				)
-		out = {}
-		for l, z in color_list:
-			
-			out[l] = []
-			out[l].append(' ┌' + '─'*self.adjust + (('─┬'+'─'*self.adjust)*(self.len_c-1)) + '─┐')
-			
-			for j, y in enumerate(z):
-				
-				out[l].append(' ')
-				
-				for i, x in enumerate(y):
-					
-					layer = self.layers_list[l]['layer']
-					
-					piece = str(layer[j][i]).rjust(self.adjust) + ' '
-					
-					try:
-						out[l][-1] += '│' + colors[x] + piece + reset
-					except KeyError:
-						msg_error = 'Color {} is not supported.'.format(x)
-						msg_error += '\nUse: Negro, Rojo, Verde, Amarillo, Azul, Morado, Cyan o Blanco.'
-						raise self.NotSupported(msg_error)
-					
-					if i == len(y)-1:
-						out[l][-1] += '│'
-					
-				if 0 <= j < len(z)-1:
-					out[l].append(' ├'+'─'*self.adjust + (('─┼'+'─'*self.adjust)*(self.len_c-1)) + '─┤')
-				else:
-					out[l].append(' └'+'─'*self.adjust + (('─┴'+'─'*self.adjust)*(self.len_c-1)) + '─┘')
+		out = self.getCube(layers)
 		
 		if on_list:
 			
@@ -749,6 +745,60 @@ class Cube:
 		
 		self.cube_resolve = cube
 	
+	def getCube(self, layers=['U','F','R','L','B','D']):
+		
+		text = Fore.WHITE + Style.BRIGHT
+		colors = {
+			'Negro':    Back.BLACK   + text,
+			'Rojo':     Back.RED     + text,
+			'Verde':    Back.GREEN   + text,
+			'Amarillo': Back.YELLOW  + text,
+			'Azul':     Back.BLUE    + text,
+			'Morado':   Back.MAGENTA + text,
+			'Cyan':     Back.CYAN    + text,
+			'Blanco':   Back.WHITE   + text
+		}
+		reset = Back.RESET + Fore.RESET
+		color_list = []
+		
+		if type(layers) in [list, tuple]:
+			for l in layers:
+				color_list.append(
+					( l, deepcopy(self.cube_colors[l]) )
+				)
+		out = {}
+		for l, z in color_list:
+			
+			out[l] = []
+			out[l].append(' ┌' + '─'*self.adjust + (('─┬'+'─'*self.adjust)*(self.len_c-1)) + '─┐')
+			
+			for j, y in enumerate(z):
+				
+				out[l].append(' ')
+				
+				for i, x in enumerate(y):
+					
+					layer = self.layers_list[l]['layer']
+					
+					piece = str(layer[j][i]).rjust(self.adjust) + ' '
+					
+					try:
+						out[l][-1] += '│' + colors[x] + piece + reset
+					except KeyError:
+						msg_error = 'Color {} is not supported.'.format(x)
+						msg_error += '\nUse: Negro, Rojo, Verde, Amarillo, Azul, Morado, Cyan o Blanco.'
+						raise self.NotSupported(msg_error)
+					
+					if i == len(y)-1:
+						out[l][-1] += '│'
+					
+				if 0 <= j < len(z)-1:
+					out[l].append(' ├'+'─'*self.adjust + (('─┼'+'─'*self.adjust)*(self.len_c-1)) + '─┤')
+				else:
+					out[l].append(' └'+'─'*self.adjust + (('─┴'+'─'*self.adjust)*(self.len_c-1)) + '─┘')
+		
+		return out
+	
 	def updateLayerList(self):
 		
 		self.layers_list = {
@@ -774,9 +824,14 @@ class Cube:
 			'd': {'layer':self.get_Dw,  'desc':'d (Down Double)'},
 			
 			'M':  {'layer':self.get_M,  'desc':'M (Middle)'},			# Middle layer turn - in the same direction as an L turn between R and L.
-			'E':  {'layer':self.get_E,  'desc':'E (Equatorial)'},		# Equatorial layer - direction as a D turn between U and D.
+			'E':  {'layer':self.get_E,  'desc':'E (Equatorial)'},		# Equatorial layer - direction as a U turn between U and D.
 			'S':  {'layer':self.get_S,  'desc':'S (Standing)'}			# Standing layer - direction as an F turn between F and B.
 		}
+	
+	def reset(self):
+		self.cube = deepcopy(self.cube_resolve)
+		self.cube_colors = deepcopy(self.cube_colors_resolve)
+		self.updateLayerList()
 	
 	#===================================================================
 	# Obtener:
@@ -873,13 +928,137 @@ class Cube:
 	@property
 	def get_S(self):
 		return self.cube[(self.len_c-1)//2]
+
+#===================================================================
+
+# Algoritmos del Método Fridrich:
+
+class Algorithms:
 	
-	#===================================================================
+	def __init__(self):
+		
+		self.Fridrich = self.Fridrich()
 	
+	class Fridrich:
+		
+		def __init__(self):
+			
+			self.PLL = self.PLL()
+		
+		class PLL:
+			
+			def __init__(self):
+				
+				self.cube = Cube()
+				values = (
+					self.cube,
+					self.prettyColors
+				)
+				
+				self.A1 = self.A1(*values)
+				self.T  = self.T(*values)
+			
+			def prettyColors(self, layers=['U','F','R','L','B','D'], with_letters=True):
+				
+				out = self.cube.getCube()
+				
+				if 'U' in layers:
+					for pos in range(len(out['U'])):
+						row  = ' '*(18 if with_letters else 17)
+						row += out['U'][pos]
+						if pos == 0:
+							print(row + ('U' if with_letters else ''))
+						else:
+							print(row)
+				
+				for pos in range(len(out['L'])):
+					if pos == 0:
+						row = ''
+						if 'L' in layers:
+							row += out['L'][pos] + ('L' if with_letters else '')
+						else:
+							row += ' '*(18 if with_letters else 17)
+						if 'F' in layers:
+							row += out['F'][pos] + ('F' if with_letters else '')
+						else:
+							row += ' '*(18 if with_letters else 17)
+						if 'R' in layers:
+							row += out['R'][pos] + ('R' if with_letters else '')
+						else:
+							row += ' '*(18 if with_letters else 17)
+						if 'B' in layers:
+							row += out['B'][pos] + ('B' if with_letters else '')
+						else:
+							row += ' '*(18 if with_letters else 17)
+					else:
+						row = ''
+						if 'L' in layers:
+							row += out['L'][pos] + (' ' if with_letters else '')
+						else:
+							row += ' '*(18 if with_letters else 17)
+						if 'F' in layers:
+							row += out['F'][pos] + (' ' if with_letters else '')
+						else:
+							row += ' '*(18 if with_letters else 17)
+						if 'R' in layers:
+							row += out['R'][pos] + (' ' if with_letters else '')
+						else:
+							row += ' '*(18 if with_letters else 17)
+						if 'B' in layers:
+							row += out['B'][pos] + (' ' if with_letters else '')
+						else:
+							row += ' '*(18 if with_letters else 17)
+					print(row)
+				
+				if 'D' in layers:
+					for pos in range(len(out['D'])):
+						row  = ' '*(18 if with_letters else 17)
+						row += out['D'][pos]
+						if pos == 0:
+							print(row + ('D' if with_letters else ''))
+						else:
+							print(row)
+		
+			class A1:
+				
+				def __init__(self, cube, prettyColors):
+					
+					self.algo = "(R' F R' B2) (R F' R' B2) R2"
+					cube.move(self.algo)
+					self.cube = cube.getCube()
+					self.prettyColors = prettyColors
+					cube.reset()
+			
+			class T:
+				
+				def __init__(self, cube, prettyColors):
+					
+					self.info = '''
+					\r	Fridrich PLL: T
+					\r	┌───┬───┬───┐
+					\r	│   │   │ ↑ │
+					\r	├───┼───┼─│─┤
+					\r	│ ← ───── → │
+					\r	├───┼───┼─│─┤
+					\r	│   │   │ ↓ │
+					\r	└───┴───┴───┘
+					'''
+					
+					self.algo = "(R U R' U') R' F R2 U' R' U' R U R' F'"
+					cube.move(self.algo)
+					self.cube = cube.getCube()
+					self.prettyColors = prettyColors
+					cube.reset()
+
+
+Algo = Algorithms()
+
 #=======================================================================
 
 # ~ cube = Cube(color_list=['Azul','Verde','Rojo','Morado','Amarillo','Negro'])
-# ~ cube.pretty()			# Muestra todas las capas de cubo en su estado actual.
+# ~ cube.move('(R U R' U')')	# Mueve el cubo virtual
+# ~ cube.showLogs()				# Muestra los movimientos realizados
+# ~ cube.prettyColors()			# Muestra todas las capas del cubo virtual en su estado actual.
 
 # ~ print(cube['F'])		# Muestra las piezas en la capa.
 # ~ print(cube[3,2,1])		# Muestra el número de pieza en la posición y, x, z.
@@ -895,12 +1074,14 @@ class Cube:
 cube = Cube()
 
 T = Algo.Fridrich.PLL.T
-print(T.info)
-# ~ print(T.algo)
-cube.move(T.algo)
+# ~ print(T.info)
+# ~ print(T.cube)
+T.prettyColors()
 
-cube.showLogs()
-cube.prettyColors()
+# ~ cube.move("URU'R'")
+# ~ cube.reset()
+# ~ cube.showLogs()
+# ~ cube.prettyColors()
 
 
 #=======================================================================
